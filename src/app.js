@@ -5,6 +5,7 @@ const connectDB = require("./config/database");
 const axios = require('axios');
 const cors = require('cors');
 const Restaurant = require('./models/Restaurant');
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -84,16 +85,16 @@ app.post('/api/route', async (req, res) => {
         const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&key=${googleMapsApiKey}`;
 
         const response = await axios.get(directionsUrl);
-        console.log("3rd phase")
+        //console.log("3rd phase")
         if (response.data.status === 'OK') {
             res.json(response.data);
-            console.log("4th phase" + response.data)
+            //console.log("4th phase" + response.data)
         } else {
             res.status(400).json({ error: 'Error fetching directions from Google Maps API', details: response.data.error_message });
-            console.log("5th phase")
+            //console.log("5th phase")
         }
     } catch (error) {
-        console.log("6th phase")
+        //console.log("6th phase")
         console.error('Error in route API:', error);
         res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
@@ -101,7 +102,7 @@ app.post('/api/route', async (req, res) => {
 
 connectDB().then(() => {
     console.log("Database connection established...");
-    app.listen(3000, () => {
+    app.listen(PORT, () => {
         console.log("Server is running...");
     })
     console.log("!Shree Ganesha!")
