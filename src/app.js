@@ -109,7 +109,7 @@ app.get('/orders', async (req, res) => {
         let result;
 
         // Filter based on the status query
-        if (status === "order_placed") {
+        if (status) {
             result = await PaymentsLog.find({ status });
         } else {
             result = await PaymentsLog.find();
