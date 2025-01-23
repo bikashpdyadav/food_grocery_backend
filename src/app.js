@@ -105,7 +105,7 @@ app.post('/paymentdetails', async (req, res) => {
 
 app.get('/orders', async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status } = req?.query;
         let result;
         if (status && status==="order_placed") {
             result = await PaymentsLog.find({ status });
