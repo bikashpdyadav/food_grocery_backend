@@ -105,20 +105,32 @@ app.post('/paymentdetails', async (req, res) => {
 
 app.get('/orders', async (req, res) => {
     try {
-        const { status } = req?.query;
+        const { status } = req.query; // Optional chaining is not needed here
         let result;
-        if (status && status==="order_placed") {
+
+        // Filter based on the status query
+        if (status === "order_placed") {
             result = await PaymentsLog.find({ status });
         } else {
             result = await PaymentsLog.find();
         }
 
-        res.json(result);
+        // Send a structured response
+        res.json({
+            success: true,
+            data: result,
+        });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("Error fetching orders:", err.message);
+
+        // Send an error response with additional info
+        res.status(500).json({
+            success: false,
+            message: "Server Error",
+        });
     }
 });
+
 
 app.get('/userorders', async (req, res) => {
     const { user_id, order_type } = req.query;
