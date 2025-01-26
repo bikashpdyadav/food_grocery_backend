@@ -4,7 +4,7 @@ const paymentSchema = new mongoose.Schema({
     order_id: {
         type: String,
         required: true,
-        trim: true,   // Removes unnecessary spaces
+        trim: true,
     },
     transaction_id: {
         type: String,
@@ -16,7 +16,7 @@ const paymentSchema = new mongoose.Schema({
         required: true,
         trim: true,
     },
-    user_id: {
+    userId: {
         type: String,
         required: true
     },
@@ -46,7 +46,7 @@ const paymentSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-    }
+    },
 }, { timestamps: true })
 
 const PaymentsLog = mongoose.model("PaymentsLog", paymentSchema);

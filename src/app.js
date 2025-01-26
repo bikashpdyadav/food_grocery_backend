@@ -6,6 +6,7 @@ const connectDB = require("./config/database");
 const cors = require('cors');
 const Restaurant = require('./models/Restaurant');
 const PaymentsLog = require('./models/PaymentsLog');
+const Location = require('./models/LocationSchema');
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
@@ -72,9 +73,9 @@ app.post("/restaurants", async (req, res) => {
 
 app.post('/paymentdetails', async (req, res) => {
     try {
-        const { order_id, transaction_id, name, amount, user_id, type, status } = req.body;
+        const { order_id, transaction_id, name, amount, userId, type, status } = req.body;
 
-        if (!order_id || !transaction_id || !name || !amount || !user_id || !type) {
+        if (!order_id || !transaction_id || !name || !amount || !userId || !type) {
             return res.status(400).json({ error: "All fields are required" });
         }
 
@@ -82,7 +83,7 @@ app.post('/paymentdetails', async (req, res) => {
             order_id,
             transaction_id,
             user_name: name,
-            user_id,
+            userId,
             amount,
             type,
             status: status || "order_placed",
@@ -105,13 +106,17 @@ app.post('/paymentdetails', async (req, res) => {
 
 app.get('/orders', async (req, res) => {
     try {
-        const { status } = req.query; // Optional chaining is not needed here
+        const { status,userId } = req.query;
+        console.log(req.query)
         let result;
 
-        // Filter based on the status query
         if (status) {
             result = await PaymentsLog.find({ status });
-        } else {
+        } 
+        else if (userId){
+            result = await PaymentsLog.find({ userId });
+        }
+        else {
             result = await PaymentsLog.find();
         }
 
@@ -130,7 +135,6 @@ app.get('/orders', async (req, res) => {
         });
     }
 });
-
 
 app.get('/userorders', async (req, res) => {
     const { user_id, order_type } = req.query;
@@ -156,8 +160,8 @@ app.get('/userorders', async (req, res) => {
     }
 });
 
-app.patch('/acceptorder', async (req, res) => {
-    const { order_id } = req.body;
+app.patch('/orderstatus', async (req, res) => {
+    const { order_id,status } = req.body;
     try {
         if (!order_id) {
             return res.status(400).json({ error: "Order ID is required" });
@@ -165,7 +169,7 @@ app.patch('/acceptorder', async (req, res) => {
         
         const updatedPayment = await PaymentsLog.findOneAndUpdate(
             { order_id: order_id }, 
-            { status: "accepted" },  
+            { status: status },  
             { new: true } 
         );
 
@@ -184,6 +188,79 @@ app.patch('/acceptorder', async (req, res) => {
     }
 });
 
+app.get('/ordertrack', async (req, res) => {
+    try{
+        const order_id = req.query.order_id;
+        if(!order_id) return res.status(400).send("Missing order_id");
+
+        const details = await Location.find({ order_id });
+        console.log(details)
+        if (details.length === 0) {
+            return res.status(404).send("No orders found for the given order type");
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Orders retrieved successfully",
+            order: details,
+        });
+    }
+    catch(err){
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+app.post('/ordertrack', async(req, res) => {
+    try{
+        const { order_id,user_location,userId } = req.body;
+        if(!order_id || !user_location || !userId){
+            return res.status(400).json({ error: "Order ID is required" });
+        }
+
+        const newOrder = new Location({
+            order_id,
+            userId,
+            user_location
+        });
+
+        await newOrder.save();
+        res.status(201).json({ message: "Success!" });
+    }
+    catch(err){
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+app.patch('/ordertrack', async(req, res) => {
+    try{
+        const { order_id, driver_location } = req.body;
+        
+        if(!order_id || !driver_location){
+            return res.status(400).json({ error: "Order ID is required" });
+        }
+
+        const updatedOrder = await Location.findOneAndUpdate(
+            { order_id: order_id },
+            { driver_location: driver_location },
+            { new: true } 
+        );
+        
+        if (!updatedOrder) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+        
+        res.status(200).json({
+            message: "Order status updated successfully",
+            order: updatedOrder,
+        });
+    }
+    catch(err){
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+})
 
 // app.post('/api/route', async (req, res) => {
 //     const { origin, destination } = req.body;
